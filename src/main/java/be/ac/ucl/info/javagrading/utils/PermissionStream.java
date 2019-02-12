@@ -3,15 +3,17 @@ package be.ac.ucl.info.javagrading.utils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.HashSet;
 
 import static java.lang.System.getSecurityManager;
 
-public class ThreadStream extends OutputStream {
+/**
+ * An OutputStream that checks if the code has PrintPermission before printing.
+ */
+public class PermissionStream extends OutputStream {
     PrintStream parent;
     boolean warned;
 
-    public ThreadStream(PrintStream parent) {
+    public PermissionStream(PrintStream parent) {
         this.parent = parent;
         warned = false;
     }

@@ -8,7 +8,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 @RunWith(GradingRunner.class)
-public class DemoTests {
+public class StdTests {
     @Test(timeout = 3000, expected = SecurityException.class)
     @Grade(value = 5.0, cputimeout = 1000)
     public void attemptChangeIO() {

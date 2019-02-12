@@ -1,11 +1,11 @@
 package be.ac.ucl.info.javagrading;
 
+import be.ac.ucl.info.javagrading.Grade;
+import be.ac.ucl.info.javagrading.TestSecurityManager;
 import be.ac.ucl.info.javagrading.utils.PrintPermission;
-import be.ac.ucl.info.javagrading.utils.ThreadPrintStream;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 import org.junit.runners.model.TestTimedOutException;
-import sun.jvm.hotspot.debugger.cdbg.AccessControl;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -20,11 +20,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * Does all the hard work about stdout/stderr and cpu timeouts.
  */
 class GradingRunnerUtils {
-    static Statement methodInvoker(FrameworkMethod method, Statement base) {
+    public static Statement methodInvoker(FrameworkMethod method, Statement base) {
         return cpu(method, jail(method, base));
     }
 
-    static Statement methodBlock(FrameworkMethod method, Statement base) {
+    public static Statement methodBlock(FrameworkMethod method, Statement base) {
         return base;
     }
 
@@ -54,6 +54,7 @@ class GradingRunnerUtils {
     }
 
     private static Statement jail(FrameworkMethod method, final Statement base) {
+        checkSecurity();
 
         final Grade g = method.getAnnotation(Grade.class);
 
@@ -79,5 +80,16 @@ class GradingRunnerUtils {
                 }, new AccessControlContext(new ProtectionDomain[]{pd}));
             }
         };
+    }
+
+    private static void checkSecurity() {
+        if(!(System.getSecurityManager() instanceof TestSecurityManager)) {
+            try {
+                System.setSecurityManager(new TestSecurityManager());
+            }
+            catch (SecurityException e) {
+                System.out.println("/!\\ WARNING: Cannot set a TestSecurityManager as the security manager. Tests may not be jailed properly.");
+            }
+        }
     }
 }
