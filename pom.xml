@@ -7,6 +7,35 @@
     <groupId>be.ac.ucl.info</groupId>
     <artifactId>JavaGrading</artifactId>
     <version>0.2</version>
+    <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Some tools to grade Java programming exercices.</description>
+    <url>https://github.com/GuillaumeDerval/JavaGrading</url>
+
+    <developers>
+        <developer>
+            <name>Guillaume Derval</name>
+            <email>guillaume.derval@uclouvain.be</email>
+            <organization>UCLouvain / ICTEAM / INGI</organization>
+            <organizationUrl>http://www.uclouvain.be</organizationUrl>
+        </developer>
+    </developers>
+
+
+    <scm>
+        <connection>scm:git:git://github.com/GuillaumeDerval/JavaGrading.git</connection>
+        <developerConnection>scm:git:ssh://github.com:GuillaumeDerval/JavaGrading.git</developerConnection>
+        <url>https://github.com/GuillaumeDerval/JavaGrading</url>
+    </scm>
+
     <build>
         <plugins>
             <plugin>
@@ -17,6 +46,46 @@
                     <target>8</target>
                 </configuration>
                 <version>3.8.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

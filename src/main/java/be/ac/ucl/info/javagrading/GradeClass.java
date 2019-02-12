@@ -24,7 +24,6 @@ public @interface GradeClass {
 
     /**
      * If set to true, then all tests in the class must be ok to receive the grade
-     * @return
      */
     boolean allCorrect() default false;
 }
