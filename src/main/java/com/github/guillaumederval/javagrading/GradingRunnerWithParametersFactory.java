@@ -1,4 +1,4 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
 import org.junit.runner.Runner;
 import org.junit.runners.model.InitializationError;

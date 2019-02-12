@@ -1,4 +1,4 @@
-import be.ac.ucl.info.javagrading.GradingListener;
+import com.github.guillaumederval.javagrading.GradingListener;
 import org.junit.runner.JUnitCore;
 
 

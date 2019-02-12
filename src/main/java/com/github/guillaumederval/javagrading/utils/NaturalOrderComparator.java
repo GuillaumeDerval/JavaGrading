@@ -28,7 +28,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package be.ac.ucl.info.javagrading.utils;
+package com.github.guillaumederval.javagrading.utils;
 
 import java.util.Arrays;
 import java.util.Comparator;

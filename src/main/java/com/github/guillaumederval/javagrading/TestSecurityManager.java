@@ -1,6 +1,6 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
-import be.ac.ucl.info.javagrading.utils.PermissionStream;
+import com.github.guillaumederval.javagrading.utils.PermissionStream;
 
 import java.io.PrintStream;
 import java.security.*;

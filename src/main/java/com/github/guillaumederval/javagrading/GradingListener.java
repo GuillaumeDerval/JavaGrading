@@ -1,6 +1,6 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
-import be.ac.ucl.info.javagrading.utils.NaturalOrderComparator;
+import com.github.guillaumederval.javagrading.utils.NaturalOrderComparator;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;

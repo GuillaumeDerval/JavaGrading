@@ -1,4 +1,4 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
 enum TestStatus {
     SUCCESS, FAILED, IGNORED, TIMEOUT

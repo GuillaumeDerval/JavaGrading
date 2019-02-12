@@ -1,15 +1,16 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
+import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
-import org.junit.runners.parameterized.BlockJUnit4ClassRunnerWithParameters;
-import org.junit.runners.parameterized.TestWithParameters;
 
-class GradingRunnerWithParameters extends BlockJUnit4ClassRunnerWithParameters {
-
-    public GradingRunnerWithParameters(TestWithParameters test) throws InitializationError {
-        super(test);
+/**
+ * Custom runner that handles CPU timeouts and stdout/err.
+ */
+public class GradingRunner extends BlockJUnit4ClassRunner {
+    public GradingRunner(Class<?> klass) throws InitializationError {
+        super(klass);
     }
 
     @Override

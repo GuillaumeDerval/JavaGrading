@@ -1,8 +1,6 @@
-package be.ac.ucl.info.javagrading;
+package com.github.guillaumederval.javagrading;
 
-import be.ac.ucl.info.javagrading.Grade;
-import be.ac.ucl.info.javagrading.TestSecurityManager;
-import be.ac.ucl.info.javagrading.utils.PrintPermission;
+import com.github.guillaumederval.javagrading.utils.PrintPermission;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 import org.junit.runners.model.TestTimedOutException;

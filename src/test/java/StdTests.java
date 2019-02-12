@@ -1,5 +1,5 @@
-import be.ac.ucl.info.javagrading.Grade;
-import be.ac.ucl.info.javagrading.GradingRunner;
+import com.github.guillaumederval.javagrading.Grade;
+import com.github.guillaumederval.javagrading.GradingRunner;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

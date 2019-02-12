@@ -1,4 +1,4 @@
-package be.ac.ucl.info.javagrading.utils;
+package com.github.guillaumederval.javagrading.utils;
 
 import java.security.Permission;
 
