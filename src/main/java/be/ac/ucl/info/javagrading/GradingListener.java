@@ -1,12 +1,24 @@
 package be.ac.ucl.info.javagrading;
 
+import be.ac.ucl.info.javagrading.utils.NaturalOrderComparator;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunListener;
+import org.junit.runners.model.TestTimedOutException;
 
-import java.io.PrintStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+
+class Format {
+    static DecimalFormat df = new DecimalFormat("0.##");
+
+    static String format(double d) {
+        return df.format(d);
+    }
+}
 
 class GradedTest {
     public final double grade;
@@ -17,6 +29,11 @@ class GradedTest {
         this.grade = grade;
         this.status = status;
         this.desc = desc;
+    }
+
+    @Override
+    public String toString() {
+        return desc.getDisplayName() + " " + status + " " + Format.format(grade);
     }
 }
 
@@ -70,18 +87,27 @@ class GradedClass {
     }
 
     public void printStatus() {
-        System.out.println("- " + cls.toString() + " " + getGrade() + "/" + getMax());
-        for(GradedTest t: grades.values()) {
-            System.out.println("\t\t" + t.desc.getDisplayName() + " " + t.status + " " + t.grade);
+        System.out.println("- " + cls.toString() + " " + Format.format(getGrade()) + "/" + Format.format(getMax()));
+
+        ArrayList<GradedTest> gcl = new ArrayList<>(grades.values());
+        Collections.sort(gcl, new NaturalOrderComparator());
+
+        for(GradedTest t: gcl) {
+            System.out.println("\t\t" + t.toString());
         }
+    }
+
+    @Override
+    public String toString() {
+        return cls.toString();
     }
 }
 
+/**
+ * Listener that outputs the grades.
+ */
 public class GradingListener extends RunListener {
-
     private HashMap<Class, GradedClass> classes;
-    private PrintStream oStdout;
-    private PrintStream oStderr;
 
     private GradedClass getGradedClassObj(Class cls) {
         if(classes.containsKey(cls))
@@ -121,32 +147,24 @@ public class GradingListener extends RunListener {
 
     public void testRunStarted(Description description) throws Exception {
         classes = new HashMap<>();
-        oStdout = System.out;
-        oStderr = System.err;
-        System.setOut(new PrintStream(new SinkStream()));
-        System.setErr(new PrintStream(new SinkStream()));
+
     }
 
     public void testRunFinished(Result result) throws Exception {
-        System.out.flush();
-        System.err.flush();
-        System.setOut(oStdout);
-        System.setErr(oStderr);
         System.out.println("--- GRADE ---");
         double grade = 0;
         double max = 0;
-        for(GradedClass c: classes.values()) {
+        ArrayList<GradedClass> gcl = new ArrayList<>(classes.values());
+        Collections.sort(gcl, new NaturalOrderComparator());
+        for(GradedClass c: gcl) {
             if(c.getMax() != 0) {
                 c.printStatus();
                 grade += c.getGrade();
                 max += c.getMax();
             }
         }
-        System.out.println("TOTAL "+grade+"/"+max);
+        System.out.println("TOTAL "+Format.format(grade)+"/"+Format.format(max));
         System.out.println("--- END GRADE ---");
-    }
-
-    public void testStarted(Description description) throws Exception {
     }
 
     public void testFinished(Description description) throws Exception {
@@ -154,7 +172,10 @@ public class GradingListener extends RunListener {
     }
 
     public void testFailure(Failure failure) throws Exception {
-        addTestResult(failure.getDescription(), TestStatus.FAILED);
+        if(failure.getException() instanceof TestTimedOutException)
+            addTestResult(failure.getDescription(), TestStatus.TIMEOUT);
+        else
+            addTestResult(failure.getDescription(), TestStatus.FAILED);
     }
 
     public void testAssumptionFailure(Failure failure) {
