@@ -57,62 +57,77 @@ class GradedClass {
             grades.put(desc, new GradedTest(desc, grade, status));
     }
 
-    public double getMax(boolean includingIgnored) {
-        double m = 0;
-        double mWithIgnored = 0;
-        boolean atLeastOneIgnored = false;
-        for(GradedTest t: grades.values()) {
-            if(t.status != TestStatus.IGNORED || includingIgnored)
-                m += t.grade;
-            else
-                atLeastOneIgnored = true;
-            mWithIgnored += t.grade;
+    class GradeResult {
+        public double successGrade;
+        public double ignoredGrade;
+        public double failedGrade;
+
+        public GradeResult() {
+            successGrade = 0;
+            ignoredGrade = 0;
+            failedGrade = 0;
         }
 
-        if(allCorrect && atLeastOneIgnored && !includingIgnored)
-            return 0;
-        if(totalValue != -1.0)
-            return totalValue*m/mWithIgnored;
-        return m;
+        public double getMax() { return successGrade + ignoredGrade + failedGrade; }
+        public double getNotIgnoredRatio() { return (successGrade + failedGrade) / getMax(); }
+    }
+
+    public double getMax(boolean includingIgnored) {
+        GradeResult gradeResult = getGradeResult();
+
+        double realMax = gradeResult.getMax();
+
+        if(realMax == 0.0)
+            return 0.0;
+
+        double destRealMax = totalValue;
+        if(destRealMax == -1.0)
+            destRealMax = realMax;
+
+        if(includingIgnored)
+            return destRealMax;
+
+        double notIgnoredRatio = gradeResult.getNotIgnoredRatio();
+        return destRealMax*notIgnoredRatio;
     }
 
     public double getGrade(boolean includingIgnored) {
-        if(includingIgnored && getMax(includingIgnored) == 0.0)
+        GradeResult gradeResult = getGradeResult();
+
+        double realMax = gradeResult.getMax();
+
+        if(realMax == 0.0)
             return 0.0;
 
-        double g = 0;
-        double m = 0;
-
-        boolean atLeastOneWrong = false;
-        boolean atLeastOneIgnore = false;
-
-        for(GradedTest t: grades.values()) {
-            if (t.status == TestStatus.SUCCESS) {
-                g += t.grade;
-                m += t.grade;
-            }
-            else if(t.status == TestStatus.IGNORED) {
-                atLeastOneIgnore = true;
-                if(includingIgnored)
-                    m += t.grade;
-            }
-            else {
-                atLeastOneWrong = true;
-                m += t.grade;
-            }
+        if(allCorrect) {
+            if(includingIgnored && gradeResult.successGrade != realMax)
+                return 0.0;
+            if(!includingIgnored && gradeResult.successGrade - (realMax - gradeResult.ignoredGrade) < 1e-5) //because floating point magic.
+                return 0.0;
         }
 
-        if(allCorrect && (atLeastOneWrong || atLeastOneIgnore))
-            g = 0;
+        double destRealMax = totalValue;
+        if(destRealMax == -1.0)
+            destRealMax = realMax;
 
-        if(totalValue != -1.0)
-            if(m != 0)
-                g = g * totalValue / m;
-            else
-                g = 0;
-
-        return g;
+        return gradeResult.successGrade * destRealMax / realMax;
     }
+
+    protected GradeResult getGradeResult() {
+        GradeResult r = new GradeResult();
+        for(GradedTest t: grades.values()) {
+            if (t.status == TestStatus.SUCCESS)
+                r.successGrade += t.grade;
+            else if(t.status == TestStatus.IGNORED)
+                r.ignoredGrade += t.grade;
+            else
+                r.failedGrade += t.grade;
+        }
+
+        return r;
+    }
+
+
 
     public void printStatus() {
         System.out.println("- " + cls.toString() + " " + Format.format(getGrade(true)) + "/" + Format.format(getMax(true)));
