@@ -16,9 +16,9 @@ public @interface Grade {
 
     /**
      * CPU timeout in ms. Does not kill the submission, but measures it the time is ok afterwards.
-     * Should be used with @Test(timeout=xxx).
+     * Should be used with @Test(timeout=xxx). If timeout is not set on @Test, the default will be 3*cpuTimeout
      */
-    long cputimeout() default -1L;
+    long cpuTimeout() default 0L;
 
     /**
      * Output cputime info, allow printing on stdout/stderr

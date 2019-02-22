@@ -26,4 +26,9 @@ public @interface GradeClass {
      * If set to true, then all tests in the class must be ok to receive the grade
      */
     boolean allCorrect() default false;
+
+    /**
+     * Default CPU timeout. Similar to the value cpuTimeout in @Grade.
+     */
+    long defaultCpuTimeout() default 0L;
 }

@@ -57,37 +57,65 @@ class GradedClass {
             grades.put(desc, new GradedTest(desc, grade, status));
     }
 
-    public double getMax() {
-        if(totalValue != -1.0)
-            return totalValue;
-        else {
-            double m = 0;
-            for(GradedTest t: grades.values()) {
+    public double getMax(boolean includingIgnored) {
+        double m = 0;
+        double mWithIgnored = 0;
+        boolean atLeastOneIgnored = false;
+        for(GradedTest t: grades.values()) {
+            if(t.status != TestStatus.IGNORED || includingIgnored)
                 m += t.grade;
-            }
-            return m;
+            else
+                atLeastOneIgnored = true;
+            mWithIgnored += t.grade;
         }
+
+        if(allCorrect && atLeastOneIgnored && !includingIgnored)
+            return 0;
+        if(totalValue != -1.0)
+            return totalValue*m/mWithIgnored;
+        return m;
     }
 
-    public double getGrade() {
+    public double getGrade(boolean includingIgnored) {
+        if(includingIgnored && getMax(includingIgnored) == 0.0)
+            return 0.0;
+
         double g = 0;
         double m = 0;
+
+        boolean atLeastOneWrong = false;
+        boolean atLeastOneIgnore = false;
+
         for(GradedTest t: grades.values()) {
-            if(t.status == TestStatus.SUCCESS)
+            if (t.status == TestStatus.SUCCESS) {
                 g += t.grade;
-            m += t.grade;
+                m += t.grade;
+            }
+            else if(t.status == TestStatus.IGNORED) {
+                atLeastOneIgnore = true;
+                if(includingIgnored)
+                    m += t.grade;
+            }
+            else {
+                atLeastOneWrong = true;
+                m += t.grade;
+            }
         }
-        if(allCorrect) {
-            if(m != g)
-                g = 0;
-        }
+
+        if(allCorrect && (atLeastOneWrong || atLeastOneIgnore))
+            g = 0;
+
         if(totalValue != -1.0)
-            g = g * totalValue / m;
+            if(m != 0)
+                g = g * totalValue / m;
+            else
+                g = 0;
+
         return g;
     }
 
     public void printStatus() {
-        System.out.println("- " + cls.toString() + " " + Format.format(getGrade()) + "/" + Format.format(getMax()));
+        System.out.println("- " + cls.toString() + " " + Format.format(getGrade(true)) + "/" + Format.format(getMax(true)));
 
         ArrayList<GradedTest> gcl = new ArrayList<>(grades.values());
         Collections.sort(gcl, new NaturalOrderComparator());
@@ -130,7 +158,14 @@ public class GradingListener extends RunListener {
         return gco;
     }
 
+    private boolean shouldBeGraded(Description desc) {
+        return desc.getAnnotation(Grade.class) != null || desc.getTestClass().getAnnotation(GradeClass.class) != null;
+    }
+
     private void addTestResult(Description description, TestStatus status) {
+        if(!shouldBeGraded(description))
+            return;
+
         GradedClass gc = getGradedClassObj(description.getTestClass());
 
         double value = gc.defaultValue;
@@ -153,17 +188,22 @@ public class GradingListener extends RunListener {
     public void testRunFinished(Result result) throws Exception {
         System.out.println("--- GRADE ---");
         double grade = 0;
+        double gradeWithoutIgnored = 0;
         double max = 0;
+        double maxWithoutIgnored = 0;
         ArrayList<GradedClass> gcl = new ArrayList<>(classes.values());
         Collections.sort(gcl, new NaturalOrderComparator());
         for(GradedClass c: gcl) {
-            if(c.getMax() != 0) {
+            if(c.getMax(true) != 0) {
                 c.printStatus();
-                grade += c.getGrade();
-                max += c.getMax();
+                grade += c.getGrade(true);
+                max += c.getMax(true);
+                gradeWithoutIgnored += c.getGrade(false);
+                maxWithoutIgnored += c.getMax(false);
             }
         }
         System.out.println("TOTAL "+Format.format(grade)+"/"+Format.format(max));
+        System.out.println("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored));
         System.out.println("--- END GRADE ---");
     }
 
