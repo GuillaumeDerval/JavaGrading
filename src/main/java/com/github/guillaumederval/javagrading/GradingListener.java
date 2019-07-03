@@ -11,6 +11,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.StringJoiner;
 
 class Format {
     static DecimalFormat df = new DecimalFormat("0.##");
@@ -18,22 +19,65 @@ class Format {
     static String format(double d) {
         return df.format(d);
     }
+
+    static String replace(String orig, String toFind, String replaceBy) {
+        String[] lines = orig.split("\n");
+        for(int i = 0; i < lines.length; i++) {
+            int foundIdx = lines[i].indexOf(toFind);
+            if(foundIdx != -1) {
+                lines[i] = prefix(replaceBy, lines[i].substring(0, foundIdx));
+            }
+        }
+        StringJoiner sj = new StringJoiner("\n");
+        for(String s: lines) sj.add(s);
+        return sj.toString();
+    }
+
+    static String prefix(String orig, String prefix) {
+        String[] lines = orig.split("\n");
+        StringJoiner sj = new StringJoiner("\n");
+        for(String s: lines) sj.add(prefix + s);
+        return sj.toString();
+    }
 }
 
 class GradedTest {
     public final double grade;
     public final TestStatus status;
     public final Description desc;
+    public final Failure possibleFailure;
 
-    public GradedTest(Description desc, double grade, TestStatus status) {
+    public GradedTest(Description desc, double grade, TestStatus status, Failure possibleFailure) {
         this.grade = grade;
         this.status = status;
         this.desc = desc;
+        this.possibleFailure = possibleFailure;
     }
 
     @Override
     public String toString() {
-        return desc.getDisplayName() + " " + status + " " + Format.format(grade);
+        String out = desc.getDisplayName() + " " + status + " " + Format.format(grade);
+
+        GradeFeedbacks feedbacks = desc.getAnnotation(GradeFeedbacks.class);
+        if(feedbacks != null) {
+            for(GradeFeedback f: feedbacks.value()) {
+                boolean show = false;
+                show |= !f.onFail() && !f.onIgnore() && !f.onSuccess() && !f.onTimeout() && (status == TestStatus.FAILED || status == TestStatus.TIMEOUT);
+                show |= f.onSuccess() && status == TestStatus.SUCCESS;
+                show |= f.onFail() && status == TestStatus.FAILED;
+                show |= f.onTimeout() && status == TestStatus.TIMEOUT;
+                show |= f.onIgnore() && status == TestStatus.IGNORED;
+                if(show)
+                    out += "\n" + Format.prefix(formatFeedback(f.message()), "\t");
+            }
+        }
+        return out;
+    }
+
+    private String formatFeedback(String feedback) {
+        if(possibleFailure != null)
+            return Format.replace(Format.replace(feedback,"$trace", possibleFailure.getTrace()),"$exception", possibleFailure.getException().toString());
+        return feedback;
     }
 }
 
@@ -52,9 +96,9 @@ class GradedClass {
         this.grades = new HashMap<>();
     }
 
-    public void add(Description desc, double grade, TestStatus status) {
+    public void add(Description desc, double grade, TestStatus status, Failure possibleFailure) {
         if(!grades.containsKey(desc))
-            grades.put(desc, new GradedTest(desc, grade, status));
+            grades.put(desc, new GradedTest(desc, grade, status, possibleFailure));
     }
 
     class GradeResult {
@@ -136,7 +180,7 @@ class GradedClass {
         Collections.sort(gcl, new NaturalOrderComparator());
 
         for(GradedTest t: gcl) {
-            System.out.println("\t\t" + t.toString());
+            System.out.println(Format.prefix(t.toString(), "\t\t"));
         }
     }
 
@@ -177,7 +221,7 @@ public class GradingListener extends RunListener {
         return desc.getAnnotation(Grade.class) != null || desc.getTestClass().getAnnotation(GradeClass.class) != null;
     }
 
-    private void addTestResult(Description description, TestStatus status) {
+    private void addTestResult(Description description, TestStatus status, Failure possibleFailure) {
         if(!shouldBeGraded(description))
             return;
 
@@ -192,7 +236,7 @@ public class GradingListener extends RunListener {
         if(value == -1.0)
             return;
 
-        gc.add(description, value, status);
+        gc.add(description, value, status, possibleFailure);
     }
 
     public void testRunStarted(Description description) throws Exception {
@@ -223,21 +267,21 @@ public class GradingListener extends RunListener {
     }
 
     public void testFinished(Description description) throws Exception {
-        addTestResult(description, TestStatus.SUCCESS);
+        addTestResult(description, TestStatus.SUCCESS, null);
     }
 
     public void testFailure(Failure failure) throws Exception {
         if(failure.getException() instanceof TestTimedOutException)
-            addTestResult(failure.getDescription(), TestStatus.TIMEOUT);
+            addTestResult(failure.getDescription(), TestStatus.TIMEOUT, failure);
         else
-            addTestResult(failure.getDescription(), TestStatus.FAILED);
+            addTestResult(failure.getDescription(), TestStatus.FAILED, failure);
     }
 
     public void testAssumptionFailure(Failure failure) {
-        addTestResult(failure.getDescription(), TestStatus.IGNORED);
+        addTestResult(failure.getDescription(), TestStatus.IGNORED, null);
     }
 
     public void testIgnored(Description description) throws Exception {
-        addTestResult(description, TestStatus.IGNORED);
+        addTestResult(description, TestStatus.IGNORED, null);
     }
 }
