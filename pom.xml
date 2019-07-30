@@ -6,7 +6,7 @@
 
     <groupId>com.github.guillaumederval</groupId>
     <artifactId>JavaGrading</artifactId>
-    <version>0.3.2</version>
+    <version>0.4.0</version>
     <packaging>jar</packaging>
 
     <licenses>
