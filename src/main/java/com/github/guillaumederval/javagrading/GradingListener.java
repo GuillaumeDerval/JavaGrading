@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.StringJoiner;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 class Format {
     static DecimalFormat df = new DecimalFormat("0.##");
@@ -39,6 +41,25 @@ class Format {
         for(String s: lines) sj.add(prefix + s);
         return sj.toString();
     }
+
+    static String csvEscape(String orig) {
+        orig = orig.replaceAll("\"", "\"\"");
+        return "\"" + orig + "\"";
+    }
+
+    static String statusToIcon(TestStatus status) {
+        switch (status) {
+            case IGNORED:
+                return "❓ Ignored";
+            case FAILED:
+                return "❌ **Failed**";
+            case SUCCESS:
+                return "✅️ Success";
+            case TIMEOUT:
+                return "\uD83D\uDD51 **Timeout**";
+        }
+        return "Unknown status";
+    }
 }
 
 class GradedTest {
@@ -54,36 +75,60 @@ class GradedTest {
         this.possibleFailure = possibleFailure;
     }
 
-    @Override
-    public String toString() {
+    private String toStringText() {
         StringBuilder out = new StringBuilder(desc.getDisplayName()).append(" ")
                 .append(status).append(" ")
                 .append(Format.format(grade));
+        processGradeFeedbacks((s) -> {
+            out.append("\n").append(Format.prefix(s, "\t"));
+        });
+        return out.toString();
+    }
 
+    private String toRSTCSVTableLine() {
+        StringBuilder out = new StringBuilder(Format.csvEscape("**→** " + desc.getDisplayName())).append(",")
+                .append(Format.statusToIcon(status)).append(",")
+                .append(Format.format(grade));
+
+        ArrayList<String> fts = new ArrayList<>();
+        processGradeFeedbacks(fts::add);
+        if(fts.size() != 0)
+        out.append(",").append(Format.csvEscape(String.join("\n\n", fts)));
+
+        return out.toString();
+    }
+
+    @Override
+    public String toString() {
+        if(Config.outputAsRST)
+            return toRSTCSVTableLine();
+        else
+            return toStringText();
+    }
+
+    private void processGradeFeedbacks(Consumer<String> op) {
         //If there is exactly one @GradeFeedback, feedback is not null, and feedbacks is null.
         //If there are more than one @GradeFeedback, feedback is null, and feedbacks is not null.
         GradeFeedback feedback = desc.getAnnotation(GradeFeedback.class);
         GradeFeedbacks feedbacks = desc.getAnnotation(GradeFeedbacks.class);
         if(feedback != null)
-            out.append(processGradeFeedback(feedback));
+            if(shouldDisplayFeedback(feedback))
+                op.accept(formatFeedback(feedback.message()));
         if(feedbacks != null) {
             for(GradeFeedback f: feedbacks.value()) {
-                out.append(processGradeFeedback(f));
+                if(shouldDisplayFeedback(f))
+                    op.accept(formatFeedback(f.message()));
             }
         }
-        return out.toString();
     }
 
-    private String processGradeFeedback(GradeFeedback f) {
-        boolean show = false;
-        show |= !f.onFail() && !f.onIgnore() && !f.onSuccess() && !f.onTimeout() && (status == TestStatus.FAILED || status == TestStatus.TIMEOUT);
+    private boolean shouldDisplayFeedback(GradeFeedback f) {
+        boolean show = !f.onFail() && !f.onIgnore() && !f.onSuccess() && !f.onTimeout() && (status == TestStatus.FAILED || status == TestStatus.TIMEOUT);
         show |= f.onSuccess() && status == TestStatus.SUCCESS;
         show |= f.onFail() && status == TestStatus.FAILED;
         show |= f.onTimeout() && status == TestStatus.TIMEOUT;
         show |= f.onIgnore() && status == TestStatus.IGNORED;
-        if(show)
-            return "\n" + Format.prefix(formatFeedback(f.message()), "\t");
-        return "";
+        return show;
     }
 
     private String formatFeedback(String feedback) {
@@ -185,7 +230,7 @@ class GradedClass {
 
 
 
-    public void printStatus() {
+    private void printStatusText() {
         System.out.println("- " + cls.toString() + " " + Format.format(getGrade(true)) + "/" + Format.format(getMax(true)));
 
         ArrayList<GradedTest> gcl = new ArrayList<>(grades.values());
@@ -194,6 +239,31 @@ class GradedClass {
         for(GradedTest t: gcl) {
             System.out.println(Format.prefix(t.toString(), "\t\t"));
         }
+    }
+
+    private void printStatusRST() {
+        StringBuilder out = new StringBuilder("    ")
+                .append(Format.csvEscape("**" + cls.toString() + "**")).append(",")
+                .append(",**")
+                .append(Format.format(getGrade(true)))
+                .append("/")
+                .append(Format.format(getMax(true)))
+                .append("**");
+        System.out.println(out.toString());
+
+        ArrayList<GradedTest> gcl = new ArrayList<>(grades.values());
+        Collections.sort(gcl, new NaturalOrderComparator());
+
+        for(GradedTest t: gcl) {
+            System.out.println(Format.prefix(t.toString(), "    "));
+        }
+    }
+
+    public void printStatus() {
+        if(Config.outputAsRST)
+            printStatusRST();
+        else
+            printStatusText();
     }
 
     @Override
@@ -264,6 +334,14 @@ public class GradingListener extends RunListener {
         double maxWithoutIgnored = 0;
         ArrayList<GradedClass> gcl = new ArrayList<>(classes.values());
         Collections.sort(gcl, new NaturalOrderComparator());
+
+        if(Config.outputAsRST) {
+            System.out.println(".. csv-table::\n" +
+                    "    :header: \"Test\", \"Status\", \"Grade\", \"Comment\"\n" +
+                    "    :widths: auto\n"+
+                    "    ");
+        }
+
         for(GradedClass c: gcl) {
             if(c.getMax(true) != 0) {
                 c.printStatus();
@@ -272,6 +350,12 @@ public class GradingListener extends RunListener {
                 gradeWithoutIgnored += c.getGrade(false);
                 maxWithoutIgnored += c.getMax(false);
             }
+        }
+
+        if(Config.outputAsRST) {
+            System.out.println("    \"**TOTAL**\",,**"+Format.format(grade)+"/"+Format.format(max)+"**");
+            System.out.println("    \"**TOTAL WITHOUT IGNORED**\",,**"+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored)+"**");
+            System.out.println();
         }
         System.out.println("TOTAL "+Format.format(grade)+"/"+Format.format(max));
         System.out.println("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored));
