@@ -56,22 +56,34 @@ class GradedTest {
 
     @Override
     public String toString() {
-        String out = desc.getDisplayName() + " " + status + " " + Format.format(grade);
+        StringBuilder out = new StringBuilder(desc.getDisplayName()).append(" ")
+                .append(status).append(" ")
+                .append(Format.format(grade));
 
+        //If there is exactly one @GradeFeedback, feedback is not null, and feedbacks is null.
+        //If there are more than one @GradeFeedback, feedback is null, and feedbacks is not null.
+        GradeFeedback feedback = desc.getAnnotation(GradeFeedback.class);
         GradeFeedbacks feedbacks = desc.getAnnotation(GradeFeedbacks.class);
+        if(feedback != null)
+            out.append(processGradeFeedback(feedback));
         if(feedbacks != null) {
             for(GradeFeedback f: feedbacks.value()) {
-                boolean show = false;
-                show |= !f.onFail() && !f.onIgnore() && !f.onSuccess() && !f.onTimeout() && (status == TestStatus.FAILED || status == TestStatus.TIMEOUT);
-                show |= f.onSuccess() && status == TestStatus.SUCCESS;
-                show |= f.onFail() && status == TestStatus.FAILED;
-                show |= f.onTimeout() && status == TestStatus.TIMEOUT;
-                show |= f.onIgnore() && status == TestStatus.IGNORED;
-                if(show)
-                    out += "\n" + Format.prefix(formatFeedback(f.message()), "\t");
+                out.append(processGradeFeedback(f));
             }
         }
-        return out;
+        return out.toString();
+    }
+
+    private String processGradeFeedback(GradeFeedback f) {
+        boolean show = false;
+        show |= !f.onFail() && !f.onIgnore() && !f.onSuccess() && !f.onTimeout() && (status == TestStatus.FAILED || status == TestStatus.TIMEOUT);
+        show |= f.onSuccess() && status == TestStatus.SUCCESS;
+        show |= f.onFail() && status == TestStatus.FAILED;
+        show |= f.onTimeout() && status == TestStatus.TIMEOUT;
+        show |= f.onIgnore() && status == TestStatus.IGNORED;
+        if(show)
+            return "\n" + Format.prefix(formatFeedback(f.message()), "\t");
+        return "";
     }
 
     private String formatFeedback(String feedback) {
