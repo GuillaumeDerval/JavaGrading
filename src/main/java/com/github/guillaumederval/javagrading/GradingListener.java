@@ -357,8 +357,8 @@ public class GradingListener extends RunListener {
             System.out.println("    \"**TOTAL WITHOUT IGNORED**\",,**"+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored)+"**");
             System.out.println();
         }
-        System.out.print("TOTAL "+Format.format(grade)+"/"+Format.format(max) + "\n \r");
-        System.out.print("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored) + "\n \r");
+        System.out.print("TOTAL "+Format.format(grade)+"/"+Format.format(max) + "\n\r");
+        System.out.print("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored) + "\n\r");
         System.out.println("--- END GRADE ---");
     }
 
