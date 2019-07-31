@@ -327,7 +327,7 @@ public class GradingListener extends RunListener {
     }
 
     public void testRunFinished(Result result) throws Exception {
-        System.out.println("--- GRADE ---");
+        System.out.print("--- GRADE ---" +"\n\r"); // yields better and simpler output format to inginious
         double grade = 0;
         double gradeWithoutIgnored = 0;
         double max = 0;
@@ -357,8 +357,8 @@ public class GradingListener extends RunListener {
             System.out.println("    \"**TOTAL WITHOUT IGNORED**\",,**"+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored)+"**");
             System.out.println();
         }
-        System.out.println("TOTAL "+Format.format(grade)+"/"+Format.format(max));
-        System.out.println("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored));
+        System.out.print("TOTAL "+Format.format(grade)+"/"+Format.format(max) + "\n \r");
+        System.out.print("TOTAL WITHOUT IGNORED "+Format.format(gradeWithoutIgnored)+"/"+Format.format(maxWithoutIgnored) + "\n \r");
         System.out.println("--- END GRADE ---");
     }
 
