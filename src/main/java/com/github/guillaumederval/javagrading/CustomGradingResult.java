@@ -12,7 +12,7 @@ public class CustomGradingResult extends Exception {
     public final Exception origException;
 
     /**
-     * @param status
+     * @param status test status
      * @param grade the grade. must be NaN to avoid defining a custom grade. Always set to NaN when status == IGNORED
      * @param feedback a string describing the feedback, or null
      * @param origException original exception, or null

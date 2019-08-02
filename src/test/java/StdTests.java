@@ -63,6 +63,7 @@ public class StdTests {
     @Test
     @Grade(value = 5, custom = true)
     public void shouldTimeoutWith0PointsAndComment() throws CustomGradingResult {
+        Assume.assumeFalse(true);
         throw new CustomGradingResult(TestStatus.TIMEOUT, "Zero!");
     }
 }
