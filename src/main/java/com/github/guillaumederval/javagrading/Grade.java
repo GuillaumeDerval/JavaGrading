@@ -26,6 +26,12 @@ public @interface Grade {
     boolean debug() default false;
 
     /**
+     * Expects a CustomGradingResult?
+     * If false, CustomGradingResult will be considered as a standard error
+     */
+    boolean custom() default false;
+
+    /**
      * Overrides permissions. Not token into accound if PermissionCollectionFactory.get() returns null.
      *
      * The class should be instantiable without args.

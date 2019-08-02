@@ -1,5 +1,5 @@
 package com.github.guillaumederval.javagrading;
 
-enum TestStatus {
+public enum TestStatus {
     SUCCESS, FAILED, IGNORED, TIMEOUT
 }
