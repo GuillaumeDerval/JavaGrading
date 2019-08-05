@@ -117,7 +117,7 @@ Ignored tests are supported:
 @Test
 @Grade(value = 5)
 void yourtest() {
-    Assume.assumeFalse(true); //JUnit function to tell that the test should be ignored
+    Assume.assumeFalse(true); //JUnit function to indicate that the test should be ignored
 }
 ```
 
@@ -187,8 +187,8 @@ public class RunTests {
 ![Screenshot of the RST output](https://raw.githubusercontent.com/GuillaumeDerval/JavaGrading/master/rst_screenshot.png "Screenshot of the RST output")
 
 ### @GradeClass
-The `@GradeClass` annotation allows to set a default grade for all test (avoiding to put @Grade everywhere)
-and also to give an overal max grade for the whole class. See next example for... an example.
+The `@GradeClass` annotation allows setting a default grade for all test (avoiding to put @Grade everywhere)
+and also to give an overall max grade for the whole class. See next example for... an example.
 
 ### Parameterized tests
 JUnit's parameterized tests are also supported:
@@ -241,4 +241,18 @@ Output:
 	mytest[2](ParametersTests) FAILED 0/20
 	mytest[3](ParametersTests) SUCCESS 20/20
 	mytest[4](ParametersTests) FAILED 0/20
+```
+
+### Multiple test classes
+
+If you have multiple test classes, simply update the main function like this:
+
+```java
+public class RunTests {
+    public static void main(String args[]) {
+        JUnitCore runner = new JUnitCore();
+        runner.addListener(new GradingListener(false));
+        runner.run(MyTests.class, MyTests2.class, MyOtherTests.class /*, ... */);
+    }
+}
 ```
