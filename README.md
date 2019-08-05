@@ -111,6 +111,21 @@ void yourtest() {
 
 If the test runs for more than 1000 milliseconds, it will receive a TIMEOUT error and receive a grade of 0/5.
 
+Note that if you allow the student (via the addition of some permission) to create new threads, the time taken in the new
+threads won't be taken into account!
+
+It is also possible to add a wall-clock-time timeout, via JUnit:
+```java
+@Test(timeout=3000) //kills the test after 3000ms in real, wall-clock time
+@Grade(value = 5)
+void yourtest() {
+    //a test for the student's code
+}
+```
+
+**By default, setting a CPU timeout also sets a wall-clock timeout at three times the cpu timeout.**
+If you want to override that, set a different value to `@Test(timeout=XXX)`.
+
 ### Ignored tests
 Ignored tests are supported:
 ```java
