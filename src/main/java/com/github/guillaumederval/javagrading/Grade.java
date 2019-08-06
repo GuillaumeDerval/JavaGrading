@@ -32,14 +32,14 @@ public @interface Grade {
     boolean custom() default false;
 
     /**
-     * Overrides permissions. Not token into accound if PermissionCollectionFactory.get() returns null.
+     * Overrides permissions. Not taken into account if PermissionCollectionFactory.get() returns null.
      *
      * The class should be instantiable without args.
      *
      * By default, tests have no particular permissions, i.e. they can't do anything fancy with the JVM.
      *
      * Note: if you allow modifyThreadGroup/modifyThread and setIO, you may break some components of JavaGrading,
-     * namely the proctection against stdout/stderr usage and the cpu timeout management. Reflection is also a problem,
+     * namely the protection against stdout/stderr usage and the cpu timeout management. Reflection is also a problem,
      * and other permissions may allow tests to jailbreak. Use with caution.
      */
     Class<? extends PermissionCollectionFactory> customPermissions() default NullPermissionCollectionFactory.class;
