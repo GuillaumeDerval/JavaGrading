@@ -20,6 +20,12 @@ public class PermissionTest {
         System.out.println("I was allowed to print!");
     }
 
+    @Test
+    @Grade(value = 5.0)
+    public void allowPrint2() {
+        System.out.println("I was allowed to print, but this should not happen if JAVAGRADING_OUTPUT=disable!");
+    }
+
     @Test()
     @Grade(value = 5.0, customPermissions = MyPerms2.class)
     public void allowThread() {

@@ -12,10 +12,12 @@ import static java.lang.System.getSecurityManager;
 public class PermissionStream extends OutputStream {
     PrintStream parent;
     boolean warned;
+    boolean isDisabled;
 
     public PermissionStream(PrintStream parent) {
         this.parent = parent;
         warned = false;
+        isDisabled = "disable".equals(System.getenv("JAVAGRADING_OUTPUT"));
     }
 
     @Override
@@ -64,10 +66,10 @@ public class PermissionStream extends OutputStream {
                     warned = true;
                     parent.println("WARNING:");
                     parent.println("You use print/println/write on System.out or System.err.");
-                    parent.println("It won't work here and slows down your code a lot. Consider removing/commenting these calls.");
+                    parent.println("It slows down your code a lot. Consider removing/commenting these calls.");
                     parent.println();
                 }
-                return false;
+                return !isDisabled;
             }
         }
         return true;
