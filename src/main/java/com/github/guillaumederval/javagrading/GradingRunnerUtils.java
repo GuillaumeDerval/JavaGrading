@@ -1,6 +1,5 @@
 package com.github.guillaumederval.javagrading;
 
-import com.github.guillaumederval.javagrading.utils.PrintPermission;
 import org.junit.Test;
 import org.junit.internal.runners.statements.FailOnTimeout;
 import org.junit.runners.model.FrameworkMethod;
@@ -9,9 +8,6 @@ import org.junit.runners.model.TestTimedOutException;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.lang.reflect.InvocationTargetException;
-import java.security.*;
-import java.security.cert.Certificate;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -23,7 +19,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 class GradingRunnerUtils {
     static Statement methodInvoker(FrameworkMethod method, Statement base) {
-        return cpu(method, jail(method, base));
+        return cpu(method, base);
     }
 
     static Statement methodBlock(FrameworkMethod method, Statement base) {
@@ -89,59 +85,4 @@ class GradingRunnerUtils {
             return base;
     }
 
-    private static Statement jail(FrameworkMethod method, final Statement base) {
-        checkSecurity();
-
-        final Grade g = method.getAnnotation(Grade.class);
-
-        PermissionCollection coll = null;
-        if(g != null) {
-            try {
-                coll = g.customPermissions().getConstructor().newInstance().get();
-            }
-            catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException ignored) {
-                //ignored
-            }
-        }
-
-        if(coll == null)
-            coll = new Permissions();
-        if(g != null && g.debug())
-            coll.add(PrintPermission.instance);
-
-        ProtectionDomain pd = new ProtectionDomain(new CodeSource(null, (Certificate[]) null), coll);
-
-        return new Statement() {
-            @Override
-            public void evaluate() throws Throwable {
-
-                Throwable ex = AccessController.doPrivileged(new PrivilegedExceptionAction<Throwable>() {
-                    @Override
-                    public Throwable run() throws Exception {
-                        Throwable ex = null;
-                        try {
-                            base.evaluate();
-                        } catch (Throwable throwable) {
-                            ex = throwable;
-                        }
-                        return ex;
-                    }
-                }, new AccessControlContext(new ProtectionDomain[]{pd}));
-
-                if(ex != null)
-                    throw ex;
-            }
-        };
-    }
-
-    private static void checkSecurity() {
-        if(!(System.getSecurityManager() instanceof TestSecurityManager)) {
-            try {
-                System.setSecurityManager(new TestSecurityManager());
-            }
-            catch (SecurityException e) {
-                System.out.println("/!\\ WARNING: Cannot set a TestSecurityManager as the security manager. Tests may not be jailed properly.");
-            }
-        }
-    }
 }

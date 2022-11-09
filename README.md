@@ -14,11 +14,6 @@ void yourtest() {
 
 Features:
 - CPU timeouts on the code
-- Jails student code
-    - No I/O, including stdout/err
-    - No thread creating by the student, ...
-    - Most things involving syscalls are forbidden
-    - specific permissions can be added on specifics tests if needed
 - Text/RST reporting
 - Custom feedback, both from outside the test (onFail, onTimeout, ...) but also from inside (see below).
 
@@ -75,6 +70,9 @@ TOTAL 5/8
 TOTAL WITHOUT IGNORED 5/8
 --- END GRADE ---
 ```
+
+Beware that students can still print a fake output such as the one above. 
+**Please parse the last lines from the standard output to retrieve the correct grade details**.
 
 ## Documentation & installation
 
@@ -271,60 +269,3 @@ public class RunTests {
     }
 }
 ```
-
-### Custom permissions
-
-JavaGrading installs a custom [SecurityManager](https://docs.oracle.com/javase/8/docs/api/java/lang/SecurityManager.html)
-that forbids the tested code to do anything that it should not do.
-
-It effectively forbids [a lot of things](https://docs.oracle.com/javase/8/docs/technotes/guides/security/permissions.html).
-JavaGrading adds an additionnal permission to this list, namely `PrintPermission`, that allows the test code to 
-print things on stdout/stderr.
-
-You can re-enable some permissions for a specific test if needed, but it does requires some boilerplate:
-
-```java
-@RunWith(GradingRunner.class)
-public class PermissionTest {
-    @Test
-    @Grade(value = 5.0, customPermissions = MyPerms1.class)
-    public void allowPrint() {
-        System.out.println("I was allowed to print!");
-    }
-
-    @Test
-    @Grade(value = 5.0, customPermissions = MyPerms2.class)
-    public void allowThread() {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                // nothing
-            }
-        };
-        t.start();
-    }
-
-    /*
-       NOTE: the class MUST be public AND static (if it is an inner class) for this to work.
-       => it must have an accessible constructor without args.
-     */
-    public static class MyPerms1 implements Grade.PermissionCollectionFactory {
-        @Override
-        public PermissionCollection get() {
-            Permissions perms = new Permissions();
-            perms.add(PrintPermission.instance);
-            return perms;
-        }
-    }
-
-    public static class MyPerms2 implements Grade.PermissionCollectionFactory {
-        @Override
-        public PermissionCollection get() {
-            Permissions perms = new Permissions();
-            perms.add(new RuntimePermission("modifyThreadGroup"));
-            perms.add(new RuntimePermission(("modifyThread")));
-            return perms;
-        }
-    }
-}
-``` 
